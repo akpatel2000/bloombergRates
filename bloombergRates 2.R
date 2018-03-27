@@ -1,3 +1,6 @@
+## Daily capture of Bloomberg Rates both Munis and Treasuries
+## Dependents -- Proprietary MySQL database
+
 library(XML)
 library(lubridate)
 library(RMySQL)
