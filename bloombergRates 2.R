@@ -70,11 +70,17 @@ rateRecord <- data.frame(date,
 
 
 ## Write to database and read from database the rates file
-db1 <- dbConnect(MySQL(), user= "root", host = "localhost", db = "dbRates", password = "Newyork@1996")
-dbWriteTable(db1, rateRecord, name = "rates", append = TRUE, row.names = FALSE)
-historicalRates <- dbReadTable(db1, name = "rates")
-numberRows <- nrow(historicalRates)
-dbDisconnect(db1)
+if (nrow(rateRecord) > 0 ) {
+    db1 <- dbConnect(MySQL(), user= "root", host = "localhost", db = "dbRates", password = "Newyork@1996")
+    dbWriteTable(db1, rateRecord, name = "rates", append = TRUE, row.names = FALSE)
+    historicalRates <- dbReadTable(db1, name = "rates")
+    numberRows <- nrow(historicalRates)
+    dbDisconnect(db1)
+    message("rateRecord write succesful")
+} else {
+    stop("rateRecord not written -- rateRecord length is zero")
+}
+
 
 ## Calculate spline curve from current yield curve
 muniCurve <- spline(c(1,2,5,10,30), 
@@ -119,7 +125,6 @@ muniCurveXDaysAgo <- as.data.frame(muniCurveXDaysAgo)
 names(muniCurveXDaysAgo) <- c("Maturity", "AAA_Yield")
 
 ## Graph the data
-
 plt1 <- ggplot(data= historicalRates, aes(x= as.Date(date), y=muniYield10Y)) + 
     geom_line(col="blue") +
     xlab("Date") + ylab("10Y Muni AAA Yield")
@@ -128,23 +133,7 @@ plt2 <- ggplot(data= historicalRates, aes(x= as.Date(date), y=treasuryYield10Y))
     xlab("Date") + ylab("10Y Treasury Yield")
 
 ggarrange(tbl1, ggarrange(plt1, plt2, ncol = 1, nrow =2), ncol = 2, nrow = 1)
-
-# yMax <- max(muniCurve$AAA_Yield, muniCurveXDaysAgo$AAA_Yield)
-# yMin <- min(muniCurve$AAA_Yield, muniCurveXDaysAgo$AAA_Yield)
-
-# par(mfrow = c(2,2))
-# 
-# plot(x=as.Date(historicalRates$date),y=historicalRates$muniYield10Y, col = "blue", type = "l", xlab = "Date", ylab = "Yield")
-# title(main="Muni 10 year AAA Yield", cex.main=.75, font.main=4, col.main = "red")
-# 
-# plot(muniCurve$Maturity, muniCurve$AAA_Yield, col="green", pch = 20, 
-#      ylim = c(yMin, yMax), xlim = c(1,30), xlab = "AAA Yield", ylab = "Maturity")
-# points(muniCurveXDaysAgo$Maturity, muniCurveXDaysAgo$AAA_Yield, col = "blue", pch = 20)
-# abline(v=c(5,10,15,20, 25))
-# title(main = paste0("Munis -- Currnet (green) vs. ", xDays, " Days Ago (blue)"), cex.main=.75, font.main = 4, col.main = "red")
-# 
-# plot(x=as.Date(historicalRates$date),y=historicalRates$treasuryYield10Y, col = "blue", type = "l", xlab = "Date", ylab = "Yield")
-# title(main="Treasury 10 year Yield", cex.main=.75, font.main=4, col.main = "red")
-# 
-# plot(x=as.Date(historicalRates$date),y=historicalRates$muniYield10Y/historicalRates$treasuryYield10Y, col = "blue", type = "l", xlab = "Date", ylab = "Ratio of Yields -- 10y Muni/10y Treasury Yields")
-# title(main="Ratio of 10y Muni/Treasury Yields", cex.main=.75, font.main=4, col.main = "red")
+rm(tbl1)
+rm(plt1)
+rm(plt2)
+rm(historicalRates)
